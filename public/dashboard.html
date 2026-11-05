@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard สรุปงานซ่อม - คณะวิทยาการสารสนเทศ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+</head>
+<body class="bg-gray-100 font-sans p-6">
+  <div class="max-w-6xl mx-auto bg-white p-6 rounded-xl shadow-md">
+    
+    <div class="flex justify-between items-center pb-4 mb-6 border-b">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">📊 ระบบบริหารจัดการและสรุปสถิติงานซ่อม</h1>
+        <p class="text-sm text-gray-500">คณะวิทยาการสารสนเทศ มหาวิทยาลัยบูรพา</p>
+      </div>
+      <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2">
+        📥 Export เป็น Excel
+      </button>
+    </div>
+
+    <!-- Cards สรุปสถิติ -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-600">
+        <p class="text-sm text-gray-600">งานซ่อมทั้งหมด</p>
+        <p class="text-2xl font-bold text-blue-900" id="totalCount">0</p>
+      </div>
+      <div class="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-500">
+        <p class="text-sm text-gray-600">รอดำเนินการ (Pending)</p>
+        <p class="text-2xl font-bold text-yellow-700" id="pendingCount">0</p>
+      </div>
+      <div class="bg-indigo-50 p-4 rounded-lg border-l-4 border-indigo-500">
+        <p class="text-sm text-gray-600">กำลังดำเนินการ (In Progress)</p>
+        <p class="text-2xl font-bold text-indigo-700" id="inProgressCount">0</p>
+      </div>
+      <div class="bg-green-50 p-4 rounded-lg border-l-4 border-green-600">
+        <p class="text-sm text-gray-600">เสร็จสิ้น (Completed)</p>
+        <p class="text-2xl font-bold text-green-700" id="completedCount">0</p>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // ฟังก์ชัน Export ข้อมูลเป็น Excel (Phase 2)
+    function exportToExcel() {
+      // ดึงข้อมูลตารางมาแปลงเป็นไฟล์ XLSX
+      const data = [
+        ["รหัสแจ้งซ่อม", "วันที่แจ้ง", "หมวดหมู่", "สถานที่", "รายละเอียด", "ผู้แจ้ง", "เบอร์โทร", "ผู้รับผิดชอบ", "สถานะ"],
+        ["REQ-1001", "13/09/2026 09:30", "คอมพิวเตอร์และโปรแกรม", "ห้อง IF-4C01", "เครื่องแล็บ 12 เปิดไม่ติด", "นิสิตสมชาย", "0812345678", "พี่แบงค์", "เสร็จสิ้น"],
+        ["REQ-1002", "13/09/2026 10:15", "ระบบเครือข่าย", "ชั้น 3 อาคาร IF", "Wi-Fi ช้ามาก", "อ.สมศักดิ์", "0898765432", "พี่แดฟ", "กำลังดำเนินการ"]
+      ];
+
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "รายงานการแจ้งซ่อม");
+      XLSX.writeFile(wb, "รายงานการแจ้งซ่อม_คณะวิทยาการสารสนเทศ.xlsx");
+    }
+  </script>
+</body>
+</html>
