@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบแจ้งซ่อม - คณะวิทยาการสารสนเทศ ม.บูรพา</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Sarabun', sans-serif; background-color: #f4f7f9; }
+    .bg-buu-primary { background-color: #0b2545; }
+    .bg-buu-secondary { background-color: #134074; }
+    .bg-buu-accent { background-color: #0077b6; }
+    .text-buu-primary { color: #0b2545; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center">
+
+  <!-- Header เลียนแบบเว็บคณะวิทยาการสารสนเทศ -->
+  <header class="w-full bg-buu-primary text-white shadow-md">
+    <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <!-- โลโก้คณะ/มหาวิทยาลัย -->
+        <div class="w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center font-bold text-buu-primary text-xl border-2 border-white">
+          BUU
+        </div>
+        <div>
+          <h1 class="text-xl font-bold leading-tight">คณะวิทยาการสารสนเทศ</h1>
+          <p class="text-xs text-gray-300">มหาวิทยาลัยบูรพา | Informatics Maintenance System</p>
+        </div>
+      </div>
+    </div>
+    <!-- แถบเมนูจำลองแบบเว็บไซต์หลัก -->
+    <div class="bg-buu-secondary text-xs px-4 py-2 border-t border-blue-900 overflow-x-auto flex space-x-6 text-gray-200">
+      <span class="font-semibold text-white">หน้าหลักแจ้งซ่อม</span>
+    </div>
+  </header>
+
+  <!-- Container ฟอร์ม -->
+  <main class="w-full max-w-lg p-4 my-6">
+    <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+      
+      <div class="border-b pb-3 mb-4">
+        <h2 class="text-lg font-bold text-buu-primary flex items-center gap-2">
+          🛠️ แบบฟอร์มแจ้งซ่อมออนไลน์
+        </h2>
+        <p class="text-xs text-gray-500 mt-1">กรอกข้อมูลเพื่อส่งเรื่องถึงเจ้าหน้าที่ผู้รับผิดชอบโดยตรง</p>
+      </div>
+
+      <form id="repairForm" onsubmit="submitForm(event)" class="space-y-4" enctype="multipart/form-data">
+        
+        <!-- ข้อมูลผู้แจ้ง -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">ชื่อ-นามสกุล ผู้แจ้ง *</label>
+          <input type="text" id="reporterName" required placeholder="เช่น นิสิต... / อ.ดร..." 
+                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">เบอร์โทรศัพท์ติดต่อ *</label>
+          <input type="tel" id="reporterPhone" required placeholder="08X-XXX-XXXX" 
+                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+        </div>
+
+        <!-- หมวดหมู่งานซ่อม (Routing System) -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">ประเภทปัญหาที่ต้องการแจ้ง *</label>
+          <select id="category" required onchange="updateAssigneeInfo()"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+            <option value="">-- โปรดเลือกประเภทปัญหา --</option>
+            <option value="FACILITY">ระบบอาคารและกายภาพ (แอร์, หลอดไฟ, ไฟฟ้า, โปรเจกเตอร์)</option>
+            <option value="COMPUTER_LAB">คอมพิวเตอร์และโปรแกรม (เครื่องแล็บพัง, โปรแกรมเปิดไม่ได้)</option>
+            <option value="NETWORK">ระบบเครือข่ายและอินเทอร์เน็ต (Wi-Fi, เน็ตช้า, ระบบคณะฯ)</option>
+          </select>
+        </div>
+
+        <!-- กล่องแสดงผู้ดูแลประจำหมวด -->
+        <div id="assigneeBadge" class="hidden p-2.5 rounded-lg text-xs font-semibold bg-blue-50 text-blue-800 border border-blue-200">
+          👤 ผู้รับผิดชอบดูแล: <span id="assigneeName">-</span>
+        </div>
+
+        <!-- สถานที่เกิดปัญหา -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">สถานที่ / ห้องที่พบปัญหา *</label>
+          <input type="text" id="location" required placeholder="เช่น ห้อง IF-4C01" 
+                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+        </div>
+
+        <!-- รายละเอียดปัญหา -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">รายละเอียดปัญหาเพิ่มเติม *</label>
+          <textarea id="description" rows="3" required placeholder="อธิบายรายละเอียดเพิ่มเติม..." 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"></textarea>
+        </div>
+
+        <!-- แนบรูปภาพจุดชำรุด -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">📷 แนบรูปภาพจุดที่ชำรุด (ไม่บังคับ)</label>
+          <input type="file" id="imageInput" accept="image/*" onchange="previewImage(event)"
+                 class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer border border-gray-300 rounded-lg p-1">
+          <div id="imagePreviewContainer" class="hidden mt-2">
+            <img id="imagePreview" src="" alt="ตัวอย่างรูปภาพ" class="w-full h-40 object-cover rounded-lg border border-gray-200">
+          </div>
+        </div>
+
+        <!-- Hidden Input เก็บ LINE User ID -->
+        <input type="hidden" id="lineUserId" value="">
+
+        <button type="submit" id="submitBtn" 
+                class="w-full py-3 bg-buu-primary hover:bg-buu-secondary text-white font-bold rounded-lg shadow-md transition duration-200">
+          🚀 ส่งข้อมูลแจ้งซ่อม
+        </button>
+      </form>
+
+    </div>
+  </main>
+
+  <script>
+    // ตาราง mapping ผู้รับผิดชอบตามข้อกำหนด
+    const assignees = {
+      'FACILITY': 'ฝ่ายอาคารและกายภาพ',
+      'COMPUTER_LAB': 'พี่แบงค์ (Computer Lab)',
+      'NETWORK': 'พี่แดฟ/พี่แด๊ป (Network & System)'
+    };
+
+    function updateAssigneeInfo() {
+      const cat = document.getElementById('category').value;
+      const badge = document.getElementById('assigneeBadge');
+      const nameSpan = document.getElementById('assigneeName');
+      
+      if (cat && assignees[cat]) {
+        nameSpan.innerText = assignees[cat];
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+    }
+
+    // ฟังก์ชันแสดงรูปพรีวิวก่อนกดส่ง
+    function previewImage(event) {
+      const input = event.target;
+      const preview = document.getElementById('imagePreview');
+      const container = document.getElementById('imagePreviewContainer');
+
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          preview.src = e.target.result;
+          container.classList.remove('hidden');
+        }
+        reader.readAsDataURL(input.files[0]);
+      } else {
+        container.classList.add('hidden');
+      }
+    }
+
+    // เริ่มต้นใช้งาน LINE LIFF (รับ User ID ของผู้แจ้ง)
+    async function initLIFF() {
+      try {
+        await liff.init({ liffId: "YOUR_LIFF_ID" }); // ใส่ LIFF ID ที่สร้างจาก LINE Developers
+        if (liff.isLoggedIn()) {
+          const profile = await liff.getProfile();
+          document.getElementById('lineUserId').value = profile.userId;
+        } else {
+          liff.login();
+        }
+      } catch (err) {
+        console.log("LIFF Initialization failed / Running on Browser", err);
+      }
+    }
+    initLIFF();
+
+    async function submitForm(e) {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.innerText = "กำลังบันทึกข้อมูล...";
+
+      // ใช้ FormData เพื่อส่งรูปภาพร่วมกับข้อมูลข้อความ
+      const formData = new FormData();
+      formData.append('reporterName', document.getElementById('reporterName').value);
+      formData.append('reporterPhone', document.getElementById('reporterPhone').value);
+      formData.append('category', document.getElementById('category').value);
+      formData.append('location', document.getElementById('location').value);
+      formData.append('description', document.getElementById('description').value);
+      formData.append('lineUserId', document.getElementById('lineUserId').value || "WEB_USER");
+
+      const fileInput = document.getElementById('imageInput');
+      if (fileInput.files[0]) {
+        formData.append('image', fileInput.files[0]);
+      }
+
+      try {
+        const res = await fetch('/api/tickets', {
+          method: 'POST',
+          body: formData // ส่งเป็น FormData
+        });
+        
+        const data = await res.json();
+        if (data.success) {
+          alert('แจ้งซ่อมเรียบร้อยแล้ว! เจ้าหน้าที่จะได้รับการแจ้งเตือนทาง LINE ทันที');
+          if (typeof liff !== 'undefined' && liff.isInClient()) {
+            liff.closeWindow();
+          } else {
+            location.reload();
+          }
+        } else {
+          alert('เกิดข้อผิดพลาด: ' + data.message);
+        }
+      } catch (error) {
+        alert('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้');
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "🚀 ส่งข้อมูลแจ้งซ่อม";
+      }
+    }
+  </script>
+</body>
+</html>
