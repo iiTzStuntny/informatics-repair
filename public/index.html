@@ -72,6 +72,7 @@
             <option value="FACILITY">ระบบอาคารและกายภาพ (แอร์, หลอดไฟ, ไฟฟ้า, โปรเจกเตอร์)</option>
             <option value="COMPUTER_LAB">คอมพิวเตอร์และโปรแกรม (เครื่องแล็บพัง, โปรแกรมเปิดไม่ได้)</option>
             <option value="NETWORK">ระบบเครือข่ายและอินเทอร์เน็ต (Wi-Fi, เน็ตช้า, ระบบคณะฯ)</option>
+            <option value="OTHER">อื่นๆ (ระบุรายละเอียดเพิ่มเติม)</option>
           </select>
         </div>
 
@@ -121,7 +122,8 @@
     const assignees = {
       'FACILITY': 'ฝ่ายอาคารและกายภาพ',
       'COMPUTER_LAB': 'พี่แบงค์ (Computer Lab)',
-      'NETWORK': 'พี่แดฟ/พี่แด๊ป (Network & System)'
+      'NETWORK': 'พี่แดฟ/พี่แด๊ป (Network & System)',
+      'OTHER': 'เจ้าหน้าที่ผู้ดูแลทั่วไป'
     };
 
     function updateAssigneeInfo() {
