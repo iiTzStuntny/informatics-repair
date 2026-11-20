@@ -2,21 +2,30 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard สรุปงานซ่อม - คณะวิทยาการสารสนเทศ</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Sarabun', sans-serif; }
+  </style>
 </head>
-<body class="bg-gray-100 font-sans p-6">
+<body class="bg-gray-100 min-h-screen p-6">
   <div class="max-w-6xl mx-auto bg-white p-6 rounded-xl shadow-md">
-    
-    <div class="flex justify-between items-center pb-4 mb-6 border-b">
+
+    <div class="flex flex-wrap justify-between items-center gap-3 pb-4 mb-6 border-b">
       <div>
         <h1 class="text-2xl font-bold text-gray-800">📊 ระบบบริหารจัดการและสรุปสถิติงานซ่อม</h1>
         <p class="text-sm text-gray-500">คณะวิทยาการสารสนเทศ มหาวิทยาลัยบูรพา</p>
       </div>
-      <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2">
-        📥 Export เป็น Excel
-      </button>
+      <div class="flex items-center gap-2">
+        <button onclick="loadDashboard()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-3 rounded-lg transition">
+          🔄 รีเฟรช
+        </button>
+        <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 transition">
+          📥 Export เป็น Excel
+        </button>
+      </div>
     </div>
 
     <!-- Cards สรุปสถิติ -->
@@ -39,23 +48,81 @@
       </div>
     </div>
 
+    <!-- ตารางรายการงานซ่อม -->
+    <div class="overflow-x-auto border rounded-lg">
+      <table class="w-full text-left text-sm text-gray-600">
+        <thead class="bg-gray-100 text-gray-700 font-semibold border-b">
+          <tr>
+            <th class="p-3">รหัสงาน</th>
+            <th class="p-3">วันที่แจ้ง</th>
+            <th class="p-3">หมวดหมู่</th>
+            <th class="p-3">สถานที่</th>
+            <th class="p-3">รายละเอียดปัญหา</th>
+            <th class="p-3">ผู้แจ้ง</th>
+            <th class="p-3">หมายเหตุช่าง</th>
+            <th class="p-3 text-center">สถานะ</th>
+          </tr>
+        </thead>
+        <tbody id="dashboardTableBody"></tbody>
+      </table>
+    </div>
+
   </div>
 
   <script>
-    // ฟังก์ชัน Export ข้อมูลเป็น Excel (Phase 2)
-    function exportToExcel() {
-      // ดึงข้อมูลตารางมาแปลงเป็นไฟล์ XLSX
-      const data = [
-        ["รหัสแจ้งซ่อม", "วันที่แจ้ง", "หมวดหมู่", "สถานที่", "รายละเอียด", "ผู้แจ้ง", "เบอร์โทร", "ผู้รับผิดชอบ", "สถานะ"],
-        ["REQ-1001", "13/09/2026 09:30", "คอมพิวเตอร์และโปรแกรม", "ห้อง IF-4C01", "เครื่องแล็บ 12 เปิดไม่ติด", "นิสิตสมชาย", "0812345678", "พี่แบงค์", "เสร็จสิ้น"],
-        ["REQ-1002", "13/09/2026 10:15", "ระบบเครือข่าย", "ชั้น 3 อาคาร IF", "Wi-Fi ช้ามาก", "อ.สมศักดิ์", "0898765432", "พี่แดฟ", "กำลังดำเนินการ"]
-      ];
+    async function loadDashboard() {
+      try {
+        const [statRes, ticketRes] = await Promise.all([
+          fetch('/api/admin/dashboard'),
+          fetch('/api/tickets')
+        ]);
 
-      const ws = XLSX.utils.aoa_to_sheet(data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "รายงานการแจ้งซ่อม");
-      XLSX.writeFile(wb, "รายงานการแจ้งซ่อม_คณะวิทยาการสารสนเทศ.xlsx");
+        const stats = await statRes.json();
+        document.getElementById('totalCount').innerText = stats.total ?? 0;
+        document.getElementById('pendingCount').innerText = stats.pending ?? 0;
+        document.getElementById('inProgressCount').innerText = stats.inProgress ?? 0;
+        document.getElementById('completedCount').innerText = stats.completed ?? 0;
+
+        const tickets = await ticketRes.json();
+        const tbody = document.getElementById('dashboardTableBody');
+        tbody.innerHTML = '';
+
+        if (!tickets.length) {
+          tbody.innerHTML = '<tr><td colspan="8" class="p-4 text-center text-gray-400">ยังไม่มีรายการแจ้งซ่อม</td></tr>';
+          return;
+        }
+
+        tickets.forEach(t => {
+          let badge = '<span class="bg-yellow-100 text-yellow-800 text-xs px-2.5 py-1 rounded-full font-semibold">รอดำเนินการ</span>';
+          if (t.status === 'IN_PROGRESS') {
+            badge = '<span class="bg-indigo-100 text-indigo-800 text-xs px-2.5 py-1 rounded-full font-semibold">กำลังซ่อม</span>';
+          } else if (t.status === 'COMPLETED') {
+            badge = '<span class="bg-green-100 text-green-800 text-xs px-2.5 py-1 rounded-full font-semibold">เสร็จสิ้น</span>';
+          }
+
+          tbody.innerHTML += `
+            <tr class="border-b hover:bg-gray-50">
+              <td class="p-3 font-bold text-blue-900 whitespace-nowrap">${t.id}</td>
+              <td class="p-3 whitespace-nowrap">${t.createdAt || '-'}</td>
+              <td class="p-3">${t.categoryName}</td>
+              <td class="p-3">${t.location}</td>
+              <td class="p-3">${t.description}</td>
+              <td class="p-3 whitespace-nowrap">${t.reporterName} (${t.reporterPhone || '-'})</td>
+              <td class="p-3 italic text-gray-500">${t.repairNote || '-'}</td>
+              <td class="p-3 text-center whitespace-nowrap">${badge}</td>
+            </tr>
+          `;
+        });
+      } catch (err) {
+        console.error('โหลดข้อมูล Dashboard ไม่สำเร็จ:', err);
+      }
     }
+
+    function exportToExcel() {
+      window.location.href = '/api/export-excel';
+    }
+
+    loadDashboard();
   </script>
 </body>
 </html>
