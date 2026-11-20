@@ -8,9 +8,9 @@ const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-// 🛡️ ตั้งค่าให้โฟลเดอร์ uploads เข้าถึงได้แบบสาธารณะและเพิ่ม Header ป้องกันหน้าดักของ Pinggy
+
 app.use('/uploads', (req, res, next) => {
-  res.setHeader('X-Pinggy-No-Screen', 'true'); // คำสั่งพิเศษบอก Pinggy ให้ข้ามหน้า Warning Page
+  res.setHeader('X-Pinggy-No-Screen', 'true'); 
   next();
 }, express.static(path.join(__dirname, 'public', 'uploads')));
 
@@ -42,18 +42,20 @@ const upload = multer({
 // -------------------------------------------------------------
 const LINE_CHANNEL_ACCESS_TOKEN = 'dCYLwi197geGSkCJCK96ZTEvkXM+IFNqyhK4M17PVT6vIpJ+LaiJcVSmTREdVEOyEFQ6LHVWSbuaPhecEp5eIFW4MGd/ZInkxQdFkZhZuqkLdZ7KG3r3HPvEzV15SjlJfxlJBCtS6F8drr6ygMYXHQdB04t89/1O/w1cDnyilFU=';
 
-const POND_USER_ID = 'U19a66f81e33232d58867641f1b2c926f';
+const Tunt_USER_ID = 'U19a66f81e33232d58867641f1b2c926f';
 
 const TARGET_LINE_IDS = {
-  FACILITY: POND_USER_ID,       
-  COMPUTER_LAB: POND_USER_ID,   
-  NETWORK: POND_USER_ID        
+  FACILITY: Tunt_USER_ID,       
+  COMPUTER_LAB: Tunt_USER_ID,   
+  NETWORK: Tunt_USER_ID,
+  OTHER: Tunt_USER_ID
 };
 
 const CATEGORY_NAMES = {
   FACILITY: 'อาคารและกายภาพ',
   COMPUTER_LAB: 'คอมพิวเตอร์และโปรแกรม (Lab)',
-  NETWORK: 'ระบบเครือข่ายและอินเทอร์เน็ต'
+  NETWORK: 'ระบบเครือข่ายและอินเทอร์เน็ต',
+  OTHER: 'อื่นๆ'
 };
 
 let tickets = [
@@ -67,7 +69,7 @@ let tickets = [
     description: 'เครื่องคอมพิวเตอร์เปิดไม่ติด จอภาพไม่แสดงผล',
     imageUrl: '',
     repairNote: 'เปลี่ยน RAM ใหม่ 1 ตัว ใช้งานได้ปกติ',
-    lineUserId: POND_USER_ID,
+    lineUserId: Tunt_USER_ID,
     status: 'COMPLETED',
     createdAt: new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })
   }
@@ -97,7 +99,7 @@ app.post('/api/tickets', upload.single('image'), async (req, res) => {
     description,
     imageUrl,
     repairNote: '',
-    lineUserId: lineUserId || POND_USER_ID,
+    lineUserId: lineUserId || Tunt_USER_ID,
     status: 'PENDING',
     createdAt: new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })
   };
@@ -142,7 +144,8 @@ app.get('/api/admin/dashboard', (req, res) => {
     byCategory: {
       FACILITY: tickets.filter(t => t.category === 'FACILITY').length,
       COMPUTER_LAB: tickets.filter(t => t.category === 'COMPUTER_LAB').length,
-      NETWORK: tickets.filter(t => t.category === 'NETWORK').length
+      NETWORK: tickets.filter(t => t.category === 'NETWORK').length,
+      OTHER: tickets.filter(t => t.category === 'OTHER').length
     }
   });
 });
@@ -232,6 +235,30 @@ app.post('/api/webhook', async (req, res) => {
   const events = req.body.events || [];
 
   for (const event of events) {
+    // 1. รับข้อความทักแชตเพื่อแสดง User ID ของผู้ส่ง
+    if (event.type === 'message' && event.source && event.source.userId) {
+      const userId = event.source.userId;
+      console.log('👤 LINE User ID:', userId);
+
+      try {
+        await axios.post('https://api.line.me/v2/bot/message/reply', {
+          replyToken: event.replyToken,
+          messages: [{
+            type: 'text',
+            text: `User ID ของคุณคือ:\n${userId}`
+          }]
+        }, {
+          headers: {
+            'Authorization': `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`,
+            'Content-Type': 'application/json'
+          }
+        });
+      } catch (err) {
+        console.error('❌ ตอบกลับ User ID ไม่สำเร็จ:', err.response ? err.response.data : err.message);
+      }
+    }
+
+    // 2. รับการกดปุ่ม Postback อัปเดตสถานะงานซ่อม
     if (event.type === 'postback') {
       const data = event.postback.data;
       const params = new URLSearchParams(data);
