@@ -45,7 +45,6 @@ const LINE_CHANNEL_ACCESS_TOKEN = 'dCYLwi197geGSkCJCK96ZTEvkXM+IFNqyhK4M17PVT6vI
 const Tunt_USER_ID = 'U19a66f81e33232d58867641f1b2c926f';
 const BANK_USER_ID = 'U4412a155aa9164a1ba4cc200e208c465';
 
-
 const TARGET_LINE_IDS = {
   FACILITY: BANK_USER_ID,       
   COMPUTER_LAB: Tunt_USER_ID,   
@@ -60,7 +59,8 @@ const CATEGORY_NAMES = {
   OTHER: 'อื่นๆ'
 };
 
-
+let tickets = [];
+let ticketAutoId = 1000;
 
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
