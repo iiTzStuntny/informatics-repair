@@ -60,23 +60,7 @@ const CATEGORY_NAMES = {
   OTHER: 'อื่นๆ'
 };
 
-let tickets = [
-  {
-    id: 'REQ-1001',
-    reporterName: 'นริช ประดิษฐ์',
-    reporterPhone: '0812345678',
-    category: 'COMPUTER_LAB',
-    categoryName: 'คอมพิวเตอร์และโปรแกรม (Lab)',
-    location: 'ห้อง IF-4B01 ชั้น 4',
-    description: 'เครื่องคอมพิวเตอร์เปิดไม่ติด จอภาพไม่แสดงผล',
-    imageUrl: '',
-    repairNote: 'เปลี่ยน RAM ใหม่ 1 ตัว ใช้งานได้ปกติ',
-    lineUserId: Tunt_USER_ID,
-    status: 'COMPLETED',
-    createdAt: new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })
-  }
-];
-let ticketAutoId = 1001;
+
 
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
