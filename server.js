@@ -221,26 +221,29 @@ app.post('/api/webhook', async (req, res) => {
   const events = req.body.events || [];
 
   for (const event of events) {
-    // 1. รับข้อความทักแชตเพื่อแสดง User ID ของผู้ส่ง
+    // 1. รับข้อความทักแชต (ตอบกลับ User ID เฉพาะตอนพิมพ์คำว่า id หรือ userid)
     if (event.type === 'message' && event.source && event.source.userId) {
       const userId = event.source.userId;
-      console.log('👤 LINE User ID:', userId);
+      const text = (event.message && event.message.text ? event.message.text : '').trim().toLowerCase();
+      console.log('👤 LINE User ID:', userId, '| ข้อความ:', event.message ? event.message.text : '-');
 
-      try {
-        await axios.post('https://api.line.me/v2/bot/message/reply', {
-          replyToken: event.replyToken,
-          messages: [{
-            type: 'text',
-            text: `User ID ของคุณคือ:\n${userId}`
-          }]
-        }, {
-          headers: {
-            'Authorization': `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`,
-            'Content-Type': 'application/json'
-          }
-        });
-      } catch (err) {
-        console.error('❌ ตอบกลับ User ID ไม่สำเร็จ:', err.response ? err.response.data : err.message);
+      if (text === 'id' || text === 'userid') {
+        try {
+          await axios.post('https://api.line.me/v2/bot/message/reply', {
+            replyToken: event.replyToken,
+            messages: [{
+              type: 'text',
+              text: `User ID ของคุณคือ:\n${userId}`
+            }]
+          }, {
+            headers: {
+              'Authorization': `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`,
+              'Content-Type': 'application/json'
+            }
+          });
+        } catch (err) {
+          console.error('❌ ตอบกลับ User ID ไม่สำเร็จ:', err.response ? err.response.data : err.message);
+        }
       }
     }
 
